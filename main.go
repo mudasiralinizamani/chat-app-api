@@ -1,6 +1,7 @@
 package main
 
 import (
+	"chat_me_api/src/middlewares"
 	"chat_me_api/src/routes"
 	"os"
 
@@ -26,6 +27,7 @@ func main() {
 
 	// Pipeline
 	routes.AuthRoutes(app)
+	app.Use(middlewares.Authorize())
 
 	app.Run(":" + port)
 }

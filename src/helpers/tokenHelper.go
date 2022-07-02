@@ -27,7 +27,7 @@ func GenerateTokens(email, fullName, role, uid string) (signedToken, signedRefre
 		Role:     role,
 		Uid:      uid,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(24)).Unix(),
+			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(1)).Unix(),
 		},
 	}
 
@@ -52,4 +52,34 @@ func GenerateTokens(email, fullName, role, uid string) (signedToken, signedRefre
 	}
 
 	return token, refreshToken, err
+}
+
+// This is function will validate the Token, and it is used in the Authenticate Middleware
+func ValidateToken(signedToken string) (claims *SignedDetails, msg string) {
+	token, err := jwt.ParseWithClaims(
+		signedToken,
+		&SignedDetails{},
+		func(token *jwt.Token) (interface{}, error) {
+			return []byte(SECRET_KEY), nil
+		},
+	)
+
+	if err != nil {
+		msg = err.Error()
+		return
+	}
+
+	claims, ok := token.Claims.(*SignedDetails)
+
+	if !ok {
+		msg = fmt.Sprintf("Token is invalid")
+		return
+	}
+
+	if claims.ExpiresAt < time.Now().Local().Unix() {
+		msg = fmt.Sprintf("Token is expired")
+		return
+	}
+
+	return claims, msg
 }

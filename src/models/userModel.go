@@ -7,17 +7,17 @@ import (
 )
 
 type User struct {
-	ID           primitive.ObjectID `bson:"_id"`
-	FullName     *string            `json:"full_name"`
-	Email        *string            `json:"email"`
-	Password     *string            `json:"password"`
-	Role         *string            `json:"role"`
-	ProfilePic   *string            `json:"profile_pic"`
-	Friends      *int               `json:"friends"`
-	Dms          *bool              `json:"dms"`
-	Token        *string            `json:"token"`
-	RefreshToken *string            `json:"refresh_token"`
-	CreatedAt    time.Time          `json:"created_at"`
-	UpdatedAt    time.Time          `json:"updated_at"`
-	UserId       string             `json:"user_id"`
+	ID            primitive.ObjectID `bson:"_id"`
+	Full_name     *string            `json:"full_name"`
+	Email         *string            `json:"email"`
+	Password      *string            `json:"password"`
+	Role          string             `json:"role"`
+	Profile_pic   *string            `json:"profile_pic"`
+	Friends       int                `json:"friends"`
+	Dms           bool               `json:"dms"`
+	Token         *string            `json:"token"`
+	Refresh_token *string            `json:"refresh_token"`
+	Created_at    time.Time          `json:"created_at"`
+	Updated_at    time.Time          `json:"updated_at"`
+	User_id       string             `json:"user_id"`
 }

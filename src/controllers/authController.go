@@ -4,6 +4,7 @@ import (
 	"chat_me_api/src/data"
 	"chat_me_api/src/dtos"
 	"chat_me_api/src/helpers"
+	"chat_me_api/src/models"
 	"chat_me_api/src/services"
 	"net/http"
 	"time"
@@ -21,7 +22,7 @@ func Signup() gin.HandlerFunc {
 		var signupDto dtos.SignupDto
 
 		if err := c.BindJSON(&signupDto); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"code": "ServerError", "error": "Something went wrong"})
+			c.JSON(http.StatusInternalServerError, gin.H{"code": "ServerError", "error": err.Error()})
 			return
 		}
 
@@ -55,5 +56,60 @@ func Signup() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"succeeded": true, "insertNumber": insertNumber.InsertedID})
+	}
+}
+
+func Signin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var dto dtos.SigninDto
+
+		if err := c.BindJSON(&dto); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"code": "ServerError", "error": err.Error()})
+			return
+		}
+
+		validationErr := validate.Struct(dto)
+
+		if validationErr != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"code": "ValidationError", "error": validationErr.Error()})
+			return
+		}
+
+		var user models.User
+
+		var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		err := data.UserCollection.FindOne(ctx, bson.M{"email": dto.Email}).Decode(&user)
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"code": "EmailNotFound", "error": "email address does not exist"})
+			return
+		}
+
+		isValid, msg := helpers.CheckIsPasswordValid(*user.Password, *dto.Password)
+
+		if !isValid {
+			c.JSON(http.StatusBadRequest, gin.H{"code": "IncorrectPassword", "error": msg})
+			return
+		}
+
+		token, refreshToken, err := helpers.GenerateTokens(*user.Email, *user.Full_name, user.Role, user.User_id)
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"code": "ServerError", "error": " Error occurred while creating token and refresh token"})
+			return
+		}
+
+		services.UpdateTokens(token, refreshToken, user.User_id)
+
+		err = data.UserCollection.FindOne(ctx, bson.M{"user_id": user.User_id}).Decode(&user)
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"code": "ServerError", "error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"user": user})
 	}
 }

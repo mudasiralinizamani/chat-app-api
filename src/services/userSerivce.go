@@ -17,23 +17,25 @@ func CreateUser(dto dtos.SignupDto, hashedPassword string) (*mongo.InsertOneResu
 	var user models.User
 
 	user.ID = primitive.NewObjectID()
-	user.UserId = user.ID.Hex()
-	user.CreatedAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
-	user.UpdatedAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
-	user.FullName = dto.FullName
+	user.User_id = user.ID.Hex()
+	user.Created_at, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+	user.Updated_at, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+	user.Full_name = dto.FullName
 	user.Email = dto.Email
-	user.Role = dto.Role
-	user.ProfilePic = dto.ProfilePic
+	user.Role = "USER"
+	user.Profile_pic = dto.ProfilePic
 	user.Password = &hashedPassword
+	user.Dms = true
+	user.Friends = 0
 
-	token, refreshToken, err := helpers.GenerateTokens(*user.Email, *user.FullName, *user.Role, user.UserId)
+	token, refreshToken, err := helpers.GenerateTokens(*user.Email, *user.Full_name, user.Role, user.User_id)
 
 	if err != nil {
 		return &mongo.InsertOneResult{}, errors.New("error occurred while generating token")
 	}
 
 	user.Token = &token
-	user.RefreshToken = &refreshToken
+	user.Refresh_token = &refreshToken
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
